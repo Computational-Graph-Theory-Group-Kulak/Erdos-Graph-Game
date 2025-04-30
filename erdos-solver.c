@@ -1,3 +1,27 @@
+
+/**
+ * This file implements an algorithm for generating and analyzing edge-colored graphs using the Nauty library.
+ * 
+ * General Structure:
+ * - Includes and Macros (Lines 25-50): Includes necessary libraries and defines macros.
+ * - Struct Definitions (Lines 50-85): Defines structures for storing graph information and thread data.
+ * - Utility Functions:
+ *   - printGraph (Lines 86-119): Prints the graph's edge colors.
+ *   - is_clique (Lines 120-134): Checks if a set of vertices forms a clique.
+ *   - maxCliques (Lines 135-156): Finds the size of the largest clique.
+ *   - determine_fitness_clique (Lines 1357-186): Computes fitness based on clique size.
+ *   - determine_fitness_vertex_capture (Lines 187-222): Computes fitness based on vertex capture game.
+ *   - determine_fitness_max_degree (Lines 223-250): Computes fitness based on maximum degree.
+ *   - readGraph (Lines 251-260): Reads a graph from a graph6 string.
+ *   - determine_canonical_labeling (Lines 261-336): Finds the canonical labeling of a graph.
+ * - Thread Functions:
+ *   - generate_children (Lines 337-450): Generates child graphs from parent graphs in parallel.
+ *   - mergesort_children (Lines 451-510): Merges two sorted lists of graphs.
+ * - Main Algorithm:
+ *   - find_best_game (Lines 511-813): Computes t0he best game configuration given a set of parent graphs.
+ * - Main Function (Lines 814-1027): Parses command-line arguments, reads input graphs, and finds the optimal game configuration.
+ */
+
 #include "readGraph/readGraph6.h"
 #include "bitset.h"
 #include <stdio.h>
@@ -9,13 +33,24 @@
 #include <pthread.h>
 #include "nauty2_8_6/nauty.h"
 
+ /**
+  * A macro that replaces each occurence of indexInEdgeList(vertex_1, vertex_2) by the code after it.
+  * This macro computes the colexicographical order of the edges starting from zero.
+  * This computes the index of the edge between two vertices as follows: given a vertax a and b with b > a
+  * Then the edge index is b*(b-1)/2 (the amount of edges in the sub-clique of order b)+ a
+  * for example the edge (1,0) has index 0
+  * (2,0) has index 1
+  * (2,1) has index 2*1/2+1 = 2
+  * (3,2) has index 3*2/2+2 = 5
+  * (4,0) has index 4*3/2 = 6
+  * 
+  */
 #define indexInEdgeList(vertex_1, vertex_2) (((vertex_1) < (vertex_2)) ? ((vertex_2) * ((vertex_2) - 1) / 2 + (vertex_1)) : ((vertex_1) * ((vertex_1) - 1) / 2 + (vertex_2)))
 
-#define USAGE "Usage: "
-#define HELPTEXT "Helptext: "
+#define USAGE "Usage: ./erdos-solver n [-h] [-g] [-t] [-b] [-p] red-graph blue-graph "
 
 /**
- * A struct to store all information of a graph (the variable name graph is already used by Nauty)
+ * A struct datatype to store all information of a graph (the variable name graph is already used by Nauty)
  */
 struct mygraph
 {
@@ -24,21 +59,26 @@ struct mygraph
 };
 
 /**
- * a struct with all data needed for a grpah generation thread
+ * a struct with all data needed for a graph generation thread
  */
 struct thread_data
 {
     struct mygraph *parents;//the list of parents
     int parentsnumber;//the number of parents in the list
     bool red_is_playing;//a boolean to store which player is playing
-    struct mygraph *children;
-    bitset* children_canonical;
-    int childrennumber;
-    int vertices;
-    int fitness_numbers;
-    bitset base_graph;
+    struct mygraph *children; //the list of generated children
+    bitset* children_canonical; //the list of canonical labeling of the children
+    int childrennumber; //the number of generated children
+    int vertices; //the number of vertices of all graphs
+    int fitness_numbers; //the number of fitness values of all graphs
+    bitset base_graph; //the bitset with edges that cannot be removed
 };
 
+
+/**
+ * a struct with all data needed for a graph merging thread
+ * This contains the two sorted lists (canonical and original) and a resulting list
+ */
 struct mergesort_thread_data
 {
     struct mygraph *children_1;
@@ -54,6 +94,10 @@ struct mergesort_thread_data
     int fitness_numbers;
 };
 
+
+/**
+ * a helper functions that prints a grapht to a specified output in a nice format
+ */
 void printGraph(FILE *__restrict__ stream, struct mygraph *g, int vertices)
 {
     fprintf(stream, "Color 1:\n");
@@ -100,6 +144,7 @@ bool is_clique(int b, bitset edgeList, int* store)
 
             // If any edge is missing
             if ((edgeList & singleton(indexInEdgeList(store[i],store[j]))) == 0){
+                //the given set of vertices are not a clique
                 return false;
             }
     }
@@ -208,6 +253,10 @@ int determine_fitness_vertex_capture(bitset edgelist, int vertices)
     return 11*size(list_red)-10*size(list_blue);
 }
 
+
+/**
+ * A function to determine the fitness value of a given game when playing the max degree game.
+ */
 int determine_fitness_max_degree(bitset edgelist, int vertices)
 {
     int max_A = 0;// a variable to hold the current maximum degree in the subgraph of red
@@ -241,7 +290,7 @@ int determine_fitness_max_degree(bitset edgelist, int vertices)
 }
 
 /**
- * A function to read a grpah6 string into a grandparent datatype
+ * A helper function to read a graph6 string into a grandparent datatype
  */
 int readGraph(const char *graphString, bitset *edgelist)
 {
@@ -254,26 +303,16 @@ int readGraph(const char *graphString, bitset *edgelist)
     return 0;
 }
 
-
 /**
- * a function to transform a given edgelist of a graph in it's canonically labelled form
+ * a function to transform an edge coloured graph into a vertex coloured simple graph
+ * every vertex and edge is mapped to a vertex and 4 additional vertices are present for the states of the edges,
+ * every vertex is labeled 0 to vertices+ edges +4 in lab
+ * ptn contains where each colour class stops
+ * We put vertices, edges and the four states each in their own colour class (a 0 denotes the end of a colour class)
+ * Vertices are connected to all incident edges and edges to the state that they were
+ * 
  */
-bitset determine_canonical_labeling(bitset expanded_edgelist, int vertices)
-{
-    int* mapping = malloc(sizeof(int)*vertices); //a variable to hold the new label for each original vertex
-    int n = vertices+(vertices*(vertices-1)/2)+4; // the order of the expanded graph is #vertices plus #edges for a complete graph plus four
-    int m = SETWORDSNEEDED(n); //m is an internal variable to store the expanded graph in m bitsets
-    nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);//double chekc if m is set correctly
-    graph g[n*m]; //alocate the space for the expanded graph
-    graph cg[n*m]; //alocate the space for the resulting canonical graph
-    int * lab = malloc(n * sizeof(int)); // a variable to hold the labels of all vertices
-    int * ptn = malloc(n * sizeof(int));// a variabel to indicate which labels belong to the same colour class
-    int orbits[n];  // a variable to store which vertex is the representative of the vertex orbits of each vertex
-                    //all vertex with the same representative belong to the same orbit
-    static DEFAULTOPTIONS_GRAPH(options); // a standard variable for nauty options with everything set to the default
-    options.getcanon = TRUE; // enabling nauty to generate a canonical labeling
-    options.defaultptn = FALSE; // enableing the option to provide custom color classes for the vertices
-    statsblk stats;// nauty setup
+void generate_expanded_graph(graph *g, int n, int m, int *lab, int*ptn, int vertices, bitset expanded_edgelist){
     EMPTYGRAPH(g, m, n);//
     int edge = 0; // variable to reduce the amout of times the edge-index is computed
     for(int i=0;  i < vertices; i++){ // for every vertex in the graph
@@ -319,6 +358,34 @@ bitset determine_canonical_labeling(bitset expanded_edgelist, int vertices)
     ptn[vertices+(vertices*(vertices-1)/2)+3] = 0;
     ptn[vertices+(vertices*(vertices-1)/2)-1] = 0;
     ptn[vertices-1] = 0;
+}
+
+
+/**
+ * a function to transform a given edgelist of a graph in it's canonically labelled form
+ * 
+ * The function generates the expanded graph with the function generate_expanded_graph
+ * and then uses nauty to generate the canonical form
+ */
+bitset determine_canonical_labeling(bitset expanded_edgelist, int vertices)
+{
+    int* mapping = malloc(sizeof(int)*vertices); //a variable to hold the new label for each original vertex
+    int n = vertices+(vertices*(vertices-1)/2)+4; // the order of the expanded graph is #vertices plus #edges for a complete graph plus four
+    int m = SETWORDSNEEDED(n); //m is an internal variable to store the expanded graph in m bitsets
+    nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);//double chekc if m is set correctly
+    graph g[n*m]; //alocate the space for the expanded graph
+    graph cg[n*m]; //alocate the space for the resulting canonical graph
+    int * lab = malloc(n * sizeof(int)); // a variable to hold the labels of all vertices
+    int * ptn = malloc(n * sizeof(int));// a variabel to indicate which labels belong to the same colour class
+    int orbits[n];  // a variable to store which vertex is the representative of the vertex orbits of each vertex
+                    //all vertex with the same representative belong to the same orbit
+    static DEFAULTOPTIONS_GRAPH(options); // a standard variable for nauty options with everything set to the default
+    options.getcanon = TRUE; // enabling nauty to generate a canonical labeling
+    options.defaultptn = FALSE; // enableing the option to provide custom color classes for the vertices
+    statsblk stats;// nauty setup
+
+    //generate the expanded graph
+    generate_expanded_graph(g,n,m,lab,ptn,vertices,expanded_edgelist);
     
     
     // letting nauty compute the canonical labelling
@@ -333,7 +400,7 @@ bitset determine_canonical_labeling(bitset expanded_edgelist, int vertices)
     //variable containg the bitset of the canonically labeled graph
     bitset encoded_canonical = EMPTY;
 
-    edge = 0;//similar strategy to the previous loop, don't compute edge indices, just go through them in order.
+    int edge = 0;//for each edge in order (using colexicographical order)
     for (int i = 0; i < vertices; i++){
         for (int j = 0; j < i; j++){
             // using the vertex mapping, compute where the edges are mapped to
@@ -361,8 +428,12 @@ bitset determine_canonical_labeling(bitset expanded_edgelist, int vertices)
 
 
 /**
- * a function to compute the set of optimal children from a set of parent graphs with a fitnessµ
+ * a function to compute the set of optimal children from a set of parent graphs with a fitness
  * this function is run on each thread so its signature is fixed: void return-type and one (void) parameter
+ * 
+ * The function adds every possible edge to every graph in its list then uses determine_canonical_labeling to find isomorphic copies
+ * then the best fitness values (highest is red is playing, lowest if blue is playing) of the two copies is kept for each fitness
+ * 
  */
 void *generate_children(void *restrict parentslist)
 {
@@ -453,7 +524,7 @@ void *generate_children(void *restrict parentslist)
                             children[j] = children[j-1];
                             children_canonical[j] = children_canonical[j-1];
                         }
-                        //adding the new grpah in both the canonical list as well as the list with its original form
+                        //adding the new graph in both the canonical list as well as the list with its original form
                         children_canonical[search_index] = encoded_canonical_new;
                         children[search_index].fitness = malloc(sizeof(int)*fitness_numbers);
                         for(int fitness_i =0; fitness_i < fitness_numbers;fitness_i++){
@@ -559,6 +630,10 @@ void *mergesort_children(void *childrenlist){
  * 
  * 
  * @return : the starting graph of the game with the fitness value set to the score an optimal game would lead to
+ * 
+ * This function checks each time if there are enough parents to split over multiple threads, 
+ * in that case it uses generate_children and mergesort_children to construct the list of children over multiple threads
+ * otherwise is performs the same logic as generate_children on this thread (no merging required)
  *
  */
 struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool red_is_playing, unsigned long max_threads,int children_in_single_thread, int vertices, bitset base_graph, int fitness_numbers)
@@ -866,7 +941,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
                             children[j] = children[j-1];
                             children_canonical[j] = children_canonical[j-1];
                         }
-                        //adding the new grpah in both the canonical list as well as the list with its original form
+                        //adding the new graph in both the canonical list as well as the list with its original form
                         children_canonical[search_index] = encoded_canonical;
                         children[search_index].fitness = malloc(sizeof(int)*fitness_numbers);
                         for(int fitness_i =0; fitness_i <fitness_numbers;fitness_i++){
@@ -922,12 +997,12 @@ int main(int argc, char **argv)
 
     unsigned long vertices = strtol(argv[1], NULL, 10); //the first argument is the number of vertices in the games
     unsigned long threads = 1; //the second argument is the maximum amount of threads that can be used
-    bitset base_graph_grandparent = EMPTY; //The third argument is a graph6 string with the red subgrpah that was present before the players began
+    bitset base_graph_grandparent = EMPTY; //The third argument is a graph6 string with the red subgraph that was present before the players began
     bitset second_base_graph_grandparent = EMPTY; //The fourth argument is a graph6 string with the blue subgraph that was present before the players began
-    //The fifth argument switches between the encoded format for the given end-configurations or the grpahs6 string of the red subgraphs
+    //The fifth argument switches between the encoded format for the given end-configurations or the graphs6 string of the red subgraphs
     bool uses_generator = false;
     //the sixth argument is if there was a bias between how many edges blue colored in it's turn and how many red colored
-    unsigned long bias = 1; //the sixth argument is if there was a bias between how many edges blue colored in it's turn and how many red colored
+    unsigned long bias = 0; //the sixth argument is if there was a bias between how many edges blue colored in it's turn and how many red colored
 
     bool first_player = true; //an optional sixth argument is which player started the game, if no first player is given red is taken as default
     bool selected_first_player = false;
@@ -936,10 +1011,13 @@ int main(int argc, char **argv)
     
     for(int i =2; i < argc;i++){
         if(argv[i][0] == '-'){
-            fprintf(stderr,"read the -");
+
+            if(argv[i][1] == 'h'){
+                fprintf(stderr,USAGE);
+                exit(-1);
+            }
 
             if(argv[i][1] == 'g'){
-                fprintf(stderr,"read -g\n");
                 uses_generator = true;
             }
 
@@ -969,6 +1047,7 @@ int main(int argc, char **argv)
             readGraph(base_graph_str_complete,&base_graph_grandparent);
             //and the memory for the extended notation freed
             free(base_graph_str_complete);
+            red_base_graph_given = true;
 
         }else{
             char *second_base_graph_str_complete = malloc(strlen(argv[i]) + 2);
@@ -1037,7 +1116,7 @@ int main(int argc, char **argv)
     {
 
         if(!uses_generator){    //if the -b flag was not set graphs are expected to be in graph6 format
-                                //these graphs contain the red subgraph and it is assumed the other edges in the complete grpahs were blue
+                                //these graphs contain the red subgraph and it is assumed the other edges in the complete graphs were blue
             int status = readGraph(graphString, &grandparents_overestimation[number_of_graphs]);
             if(status == 0){ //if no error occured
                 number_of_graphs++;
@@ -1052,7 +1131,7 @@ int main(int argc, char **argv)
     struct mygraph *parents = malloc(sizeof(struct mygraph) * number_of_graphs);
     int distinct_graphs = 0;
 
-    //If the graph were supplied in grpah6 format, they are expanded to their bitset encoding and all non-red edges are coloured blue.
+    //If the graph were supplied in graph6 format, they are expanded to their bitset encoding and all non-red edges are coloured blue.
     //if they were already in bitset format
     int edges =0;
     if(!uses_generator){
@@ -1086,7 +1165,7 @@ int main(int argc, char **argv)
             while(temp_graph < distinct_graphs && parents[temp_graph].encoded_canonical < temp_encoded_canonical){
                 temp_graph++;
             }
-            //if it is not yet in the list, because all grpahs have a smaller encoding or there is a gap in the list were this encoding should fit
+            //if it is not yet in the list, because all graphs have a smaller encoding or there is a gap in the list were this encoding should fit
             if(temp_graph == distinct_graphs || (temp_graph < distinct_graphs && parents[temp_graph].encoded_canonical > temp_encoded_canonical)){
                 //move all graphs to the right of the new graph
                 for (int moving_graph = distinct_graphs; moving_graph > temp_graph; moving_graph--){
@@ -1125,7 +1204,7 @@ int main(int argc, char **argv)
         }
     }
 
-    free(grandparents_overestimation); // free the space we allowated at the beginning.
+    free(grandparents_overestimation); // free the space we allocated at the beginning.
 
     //if the games were generated using the supplied generator we computed the number of edges that were actually played
     //first we count the edges that are present
