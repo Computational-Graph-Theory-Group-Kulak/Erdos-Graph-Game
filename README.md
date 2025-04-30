@@ -12,11 +12,7 @@ This requires a working shell and `make`.
 - Download, extract and configure [`nauty`](https://pallini.di.uniroma1.it/).
 - Configure and compile the nauty libraries for multithreading using: `./configure --enable-tls` and `make`.
 - Compile using: 
-	* `make 64-bit` to create a binary for the 64 bit version
-    * `make 128-bit` to create a binary for the 64 bit version
-
-The 64 bit version is significantly faster than the 128 bit version, and it is advised to use this version 
-
+	* `make all-64bit` to create a binary for the 64 bit version
 
 ### Usage of erdos-solver
 
