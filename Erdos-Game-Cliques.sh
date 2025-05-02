@@ -8,7 +8,7 @@ echo "edges: $edges"
 
 mkdir -p $dir
 
-./nauty2_8_6/geng $1 $edges 2> $dir/error_geng.txt$i > $dir/endconfigurations.e
+./nauty2_8_6/geng $1 $edges 2> $dir/error_geng.txt 1> $dir/endconfigurations.e
 
 counts=$(wc -l < $dir/endconfigurations.e)
 echo "counts: $counts"
