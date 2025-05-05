@@ -18,7 +18,7 @@
  *   - generate_children (Lines 337-450): Generates child graphs from parent graphs in parallel.
  *   - mergesort_children (Lines 451-510): Merges two sorted lists of graphs.
  * - Main Algorithm:
- *   - find_best_game (Lines 511-813): Computes t0he best game configuration given a set of parent graphs.
+ *   - find_best_game (Lines 511-813): Computes the best game configuration given a set of parent graphs.
  * - Main Function (Lines 814-1027): Parses command-line arguments, reads input graphs, and finds the optimal game configuration.
  */
 
@@ -96,7 +96,7 @@ struct mergesort_thread_data
 
 
 /**
- * a helper functions that prints a grapht to a specified output in a nice format
+ * a helper function that prints a graph to a specified output in a nice format
  */
 void printGraph(FILE *__restrict__ stream, struct mygraph *g, int vertices)
 {
@@ -203,7 +203,7 @@ int determine_fitness_clique(bitset edgelist, int vertices)
             edge++;
         }
     }
-    //store is a temp memeory space needed to check the cliques. it is created once and then reused
+    //store is a temp memory space needed to check the cliques. it is created once and then reused
     int* store = malloc(sizeof(int)*vertices);
     //using the helper function we compute the largest clique number of red
     int fitness_red = maxCliques(-1, 0, vertices, store, list_red);
@@ -243,7 +243,7 @@ int determine_fitness_vertex_capture(bitset edgelist, int vertices)
             }
 
         }
-        if(number_A > number_B){ //the current vertex has more edge of colour one than colour two
+        if(number_A > number_B){ //the current vertex has more incident edges of colour one than of colour two
             add(list_red,i);
         }
         if(number_B > number_A){
@@ -314,7 +314,7 @@ int readGraph(const char *graphString, bitset *edgelist)
  */
 void generate_expanded_graph(graph *g, int n, int m, int *lab, int*ptn, int vertices, bitset expanded_edgelist){
     EMPTYGRAPH(g, m, n);//
-    int edge = 0; // variable to reduce the amout of times the edge-index is computed
+    int edge = 0; // variable to reduce the amount of times the edge-index is computed
     for(int i=0;  i < vertices; i++){ // for every vertex in the graph
             lab[i] = i; // the label of the vertex in the expanded is the label of the vertex in the original graph
             ptn[i] = 1; // All vertices are in the same colour class
@@ -351,7 +351,7 @@ void generate_expanded_graph(graph *g, int n, int m, int *lab, int*ptn, int vert
     lab[vertices+(vertices*(vertices-1)/2)+2] = vertices+(vertices*(vertices-1)/2)+2;
     lab[vertices+(vertices*(vertices-1)/2)+3] = vertices+(vertices*(vertices-1)/2)+3;
 
-    //clsoing the colour classes: one for the vertices, one for the edges and four for each state
+    //closing the colour classes: one for the vertices, one for the edges and four for each state
     ptn[vertices+(vertices*(vertices-1)/2)] = 0;
     ptn[vertices+(vertices*(vertices-1)/2)+1] = 0;
     ptn[vertices+(vertices*(vertices-1)/2)+2] = 0;
@@ -362,7 +362,7 @@ void generate_expanded_graph(graph *g, int n, int m, int *lab, int*ptn, int vert
 
 
 /**
- * a function to transform a given edgelist of a graph in it's canonically labelled form
+ * a function to transform a given edgelist of a graph in its canonically labelled form
  * 
  * The function generates the expanded graph with the function generate_expanded_graph
  * and then uses nauty to generate the canonical form
@@ -372,16 +372,16 @@ bitset determine_canonical_labeling(bitset expanded_edgelist, int vertices)
     int* mapping = malloc(sizeof(int)*vertices); //a variable to hold the new label for each original vertex
     int n = vertices+(vertices*(vertices-1)/2)+4; // the order of the expanded graph is #vertices plus #edges for a complete graph plus four
     int m = SETWORDSNEEDED(n); //m is an internal variable to store the expanded graph in m bitsets
-    nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);//double chekc if m is set correctly
+    nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);//double check if m is set correctly
     graph g[n*m]; //alocate the space for the expanded graph
     graph cg[n*m]; //alocate the space for the resulting canonical graph
     int * lab = malloc(n * sizeof(int)); // a variable to hold the labels of all vertices
-    int * ptn = malloc(n * sizeof(int));// a variabel to indicate which labels belong to the same colour class
+    int * ptn = malloc(n * sizeof(int));// a variable to indicate which labels belong to the same colour class
     int orbits[n];  // a variable to store which vertex is the representative of the vertex orbits of each vertex
-                    //all vertex with the same representative belong to the same orbit
+                    //all vertices with the same representative belong to the same orbit
     static DEFAULTOPTIONS_GRAPH(options); // a standard variable for nauty options with everything set to the default
     options.getcanon = TRUE; // enabling nauty to generate a canonical labeling
-    options.defaultptn = FALSE; // enableing the option to provide custom color classes for the vertices
+    options.defaultptn = FALSE; // enabling the option to provide custom color classes for the vertices
     statsblk stats;// nauty setup
 
     //generate the expanded graph
@@ -626,7 +626,7 @@ void *mergesort_children(void *childrenlist){
  * @param children_in_single_thread : the amount of children that should minimally be generated on a single thread
  * @param vertices : the number of vertices in the game
  * @param base_graph : an edgelist containing all edges that were present in the starting configuration and cannot be removed
- * @param fitness_numbers : the number of fitness values per graphs
+ * @param fitness_numbers : the number of fitness values per graph
  * 
  * 
  * @return : the starting graph of the game with the fitness value set to the score an optimal game would lead to
@@ -638,7 +638,7 @@ void *mergesort_children(void *childrenlist){
  */
 struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool red_is_playing, unsigned long max_threads,int children_in_single_thread, int vertices, bitset base_graph, int fitness_numbers)
 {
-    //first step is computing how many threads will be used. This is to make a tradeoof between the overhead cost and performance gain
+    //first step is computing how many threads will be used. This is to make a trade-off between the overhead cost and performance gain
     // We use the number of children generated as an approximation for the amount of work to be done. However it must be noted that isomorphic copies take less time than new graphs
     int children_per_graph = (size(parents[0].encoded_canonical) / 3 + 1);
     int threads = parentsnumber * children_per_graph / children_in_single_thread > max_threads ? max_threads : parentsnumber * children_per_graph / children_in_single_thread;
@@ -699,7 +699,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
 
         bool even = ((threads % 2) == 0);
         //allocate space for the threads to merge all the independent lists
-        //oldargs and newargs will be used to refer to the data to merge and the data after merging, as the merging will happen iterativly
+        //oldargs and newargs will be used to refer to the data to merge and the data after merging, as the merging will happen iteratively
         struct mergesort_thread_data *oldargs = malloc(sizeof(struct mergesort_thread_data) * new_threads);
         thread = malloc(sizeof(pthread_t) * new_threads);
         /**
@@ -776,7 +776,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
         
 
            /**
-            * repeat the process above, until only a single list is contstructed
+            * repeat the process above, until only a single list is constructed
             */
         while (new_threads > 1)
         {
@@ -1001,8 +1001,8 @@ int main(int argc, char **argv)
     bitset second_base_graph_grandparent = EMPTY; //The fourth argument is a graph6 string with the blue subgraph that was present before the players began
     //The fifth argument switches between the encoded format for the given end-configurations or the graphs6 string of the red subgraphs
     bool uses_generator = false;
-    //the sixth argument is if there was a bias between how many edges blue colored in it's turn and how many red colored
-    unsigned long bias = 0; //the sixth argument is if there was a bias between how many edges blue colored in it's turn and how many red colored
+    //the sixth argument is if there was a bias between how many edges blue colored in its turn and how many red colored
+    unsigned long bias = 0; //the sixth argument is if there was a bias between how many edges blue colored in its turn and how many red colored
 
     bool first_player = true; //an optional sixth argument is which player started the game, if no first player is given red is taken as default
     bool selected_first_player = false;
@@ -1062,7 +1062,7 @@ int main(int argc, char **argv)
 
     }
 
-    //both edgelists are printed for debugging puposes
+    //both edgelists are printed for debugging purposes
     fprintf(stderr, "base_graph.edgelist: ");
     for(int i = 0; i < vertices*(vertices-1); i++){
             fprintf(stderr, "%d", (base_graph_grandparent & (singleton (i))) ? 1 : 0);
@@ -1181,7 +1181,7 @@ int main(int argc, char **argv)
                 distinct_graphs++;
             }
         }else{
-            //if we generated the graphs than we assume that graphs were not isomorphic and we maintain their labeling
+            //if we generated the graphs, then we assume that graphs were not isomorphic and we maintain their labeling
             //this is to allow reference to the provided red and blue starting graphs
             //first we sort them with the given encoding
             int temp_graph = 0;
@@ -1219,7 +1219,7 @@ int main(int argc, char **argv)
 
     //then we initialize a variable to store how many edges blue would have colored if he was the last player to choose edges
     int leftover_edges =  0;
-    //intializing a variable to track which player made the last move
+    //initializing a variable to track which player made the last move
     bool last_player_is_red = first_player;
     if(first_player){
         //the edges that were actually used in the game are the edges that could have been used (counted in the variable edges)
@@ -1263,7 +1263,7 @@ int main(int argc, char **argv)
     }
     fprintf(stderr, "\n");
 
-    //call the function on the intialized game
+    //call the function on the initialized game
     struct mygraph winner = find_best_game( parents, distinct_graphs, last_player_is_red, threads, 3000000, vertices, combined_base_graph,3);
     
     //print all information about the winning graph
