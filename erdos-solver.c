@@ -530,7 +530,7 @@ void *generate_children(void *restrict parentslist)
                         for(int fitness_i =0; fitness_i < fitness_numbers;fitness_i++){
                         children[search_index].fitness[fitness_i] = parents[i].fitness[fitness_i];
                         }
-                        //by storing the original labelling we keep the orrientation identical to the base-graph
+                        //by storing the original labelling we keep the orientation identical to the base-graph
                         children[search_index].encoded_canonical =child;
                         args->childrennumber++;
                     }
@@ -649,13 +649,13 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
     {
         int parents_per_thread = parentsnumber / threads; //determine the amount of parents per thread given the selected number of threads.
         fprintf(stderr, "parents_per_thread: %d\n", parents_per_thread);
-        struct thread_data *args = malloc(sizeof(struct thread_data) * threads);//allocate space for the nessecary thread-data
+        struct thread_data *args = malloc(sizeof(struct thread_data) * threads);//allocate space for the necessary thread-data
         pthread_t *thread = malloc(sizeof(pthread_t) * threads);//allocate space for the pointers to the pthreads
         for (int t = 0; t < threads; t++)//for each thread
         {
             if (t == threads - 1) //the last thread has to take the remainder of the parents
             {
-                //allocate space for the nessecary parent graphs
+                //allocate space for the necessary parent graphs
                 args[t].parents = parents + t * parents_per_thread;
                 //set the correct number of parents
                 args[t].parentsnumber = parents_per_thread + parentsnumber % threads;
@@ -665,7 +665,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
             }
             else //every other thread has an equal number of parents
             {
-                //allocate space for the nessecary parent graphs
+                //allocate space for the necessary parent graphs
                 args[t].parents = parents + t * parents_per_thread;
                 //set the correct number of parents
                 args[t].parentsnumber = parents_per_thread;
@@ -734,7 +734,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
             
             //running the merge thread
             pthread_create(&thread[t], NULL, mergesort_children, &oldargs[t]);
-            }else //if the number of threads was odd, then the last thread should no be merged, but the data must be put in the correct format
+            }else //if the number of threads was odd, then the last thread should not be merged, but the data must be put in the correct format
             {
                 //setting the resulting list to the original list as there is no list to merge with.
                 oldargs[t].children = malloc(sizeof(struct mygraph) * (args[2*t].childrennumber));
@@ -866,7 +866,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
     }
     else //If this step is run in a single thread
     {
-        for (int i = 0; i < parentsnumber; i++)//for each existing parent graphs
+        for (int i = 0; i < parentsnumber; i++)//for each existing parent graph
         {
             for (int edge = 0; edge < vertices*(vertices-1)/2; edge++)//for each edge
             {
@@ -947,7 +947,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
                         for(int fitness_i =0; fitness_i <fitness_numbers;fitness_i++){
                         children[search_index].fitness[fitness_i] = parents[i].fitness[fitness_i];
                         }
-                        //by storing the original labelling we keep the orrientation identical to the base-graph
+                        //by storing the original labelling we keep the orientation identical to the base-graph
                         children[search_index].encoded_canonical =child;
                         childrennumber++;
                     }
