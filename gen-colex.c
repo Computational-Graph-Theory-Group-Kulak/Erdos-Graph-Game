@@ -12,9 +12,9 @@
 
 
 /**
-  * A macro that replaces each occurence of indexInEdgeList(vertex_1, vertex_2) by the code after it.
+  * A macro that replaces each occurrence of indexInEdgeList(vertex_1, vertex_2) by the code after it.
   * This macro computes the colexicographical order of the edges starting from zero.
-  * This computes the index of the edge between two vertices as follows: given a vertax a and b with b > a
+  * This computes the index of the edge between two vertices as follows: given a vertex a and b with b > a
   * Then the edge index is b*(b-1)/2 (the amount of edges in the sub-clique of order b)+ a
   * for example the edge (1,0) has index 0
   * (2,0) has index 1
@@ -60,7 +60,7 @@ int readGraph(const char *graphString, bitset *edgelist)
  */
 void generate_expanded_graph(graph *g, int n, int m, int *lab, int*ptn, int vertices, bitset expanded_edgelist){
     EMPTYGRAPH(g, m, n);//
-    int edge = 0; // variable to reduce the amout of times the edge-index is computed
+    int edge = 0; // variable to reduce the amount of times the edge-index is computed
     for(int i=0;  i < vertices; i++){ // for every vertex in the graph
             lab[i] = i; // the label of the vertex in the expanded is the label of the vertex in the original graph
             ptn[i] = 1; // All vertices are in the same colour class
@@ -97,7 +97,7 @@ void generate_expanded_graph(graph *g, int n, int m, int *lab, int*ptn, int vert
     lab[vertices+(vertices*(vertices-1)/2)+2] = vertices+(vertices*(vertices-1)/2)+2;
     lab[vertices+(vertices*(vertices-1)/2)+3] = vertices+(vertices*(vertices-1)/2)+3;
 
-    //clsoing the colour classes: one for the vertices, one for the edges and four for each state
+    //closing the colour classes: one for the vertices, one for the edges and four for each state
     ptn[vertices+(vertices*(vertices-1)/2)] = 0;
     ptn[vertices+(vertices*(vertices-1)/2)+1] = 0;
     ptn[vertices+(vertices*(vertices-1)/2)+2] = 0;
@@ -130,7 +130,7 @@ void compute_possible_edges(struct mygraph *graph_to_label,int* orbits){
 
 
 /**
- * a function to transform a given edgelist of a graph in it's canonically labelled form.
+ * a function to transform a given edgelist of a graph in its canonically labelled form.
  * During this process the graph datatype is also updated with the list of edge-orbits.
  * For each orbit the edge with the lowest index is stored that is higher than the index of the edge that was last added to the graph.
  */
@@ -140,11 +140,11 @@ void determine_canonical_labeling(struct mygraph* graph_to_label)
     int* mapping = malloc(sizeof(int)*vertices); //a variable to hold the new label for each original vertex
     int n = vertices+(vertices*(vertices-1)/2)+4; // the order of the expanded graph is #vertices plus #edges for a complete graph plus four
     int m = SETWORDSNEEDED(n); //m is an internal variable to store the expanded graph in m bitsets
-    nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);//double chekc if m is set correctly
+    nauty_check(WORDSIZE, m, n, NAUTYVERSIONID);//double check if m is set correctly
     graph g[n*m]; //alocate the space for the expanded graph
     graph cg[n*m]; //alocate the space for the resulting canonical graph
     int * lab = malloc(n * sizeof(int)); // a variable to hold the labels of all vertices
-    int * ptn = malloc(n * sizeof(int));// a variabel to indicate which labels belong to the same colour class
+    int * ptn = malloc(n * sizeof(int));// a variable to indicate which labels belong to the same colour class
     int orbits[n];  // a variable to store which vertex is the representative of the vertex orbits of each vertex
                     //all vertex with the same representative belong to the same orbit
     static DEFAULTOPTIONS_GRAPH(options); // a standard variable for nauty options with everything set to the default
@@ -219,9 +219,9 @@ struct mygraph* generate_final_configuration(struct mygraph* start_graph, int nu
     generated_graphs[0].numberOfVertices =start_graph->numberOfVertices;
     start_graph->last_edge = -1;//set the last added edge of the start-graph to -1
 
-    //intialize a variable to store how many graphs were in the previous step
+    //initialize a variable to store how many graphs were in the previous step
     int nb_of_old_graphs = 1;
-    //intialize a variable to store the upper bound on the number of edges that can be coloured in the next step
+    //initialize a variable to store the upper bound on the number of edges that can be coloured in the next step
     int nb_of_empty_edges = 0;
 
     //determine the canonical labeling of the start-graph and more importantly:
@@ -365,7 +365,7 @@ int main(int argc, char **argv)
     bitset red_start_graph = EMPTY; ///This variable is a graph6 string with the red subgraph that was present before the players began
     bitset blue_start_graph = EMPTY; ///This variable is a graph6 string with the blue subgraph that was present before the players began
     
-    unsigned long bias = 0; //this variable is if there was a bias between how many edges blue colored in it's turn and how many red colored
+    unsigned long bias = 0; //this variable is if there was a bias between how many edges blue colored in its turn and how many red colored
 
     bool red_player_starts = true; //This variable contains if the red player started the game, if no first player is given red is taken as default
     
@@ -443,7 +443,7 @@ int main(int argc, char **argv)
 
     }
     
-    int number_of_graphs;//intialize a variabel to store the number of generated graphs
+    int number_of_graphs;//initialize a variable to store the number of generated graphs
 
     int number_to_color = size(base_graph) -size(red_start_graph); //compute the number of red edges in the end configuration 
     //starting from the number of edges that can be coloured and are not yet coloured
