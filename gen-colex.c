@@ -208,15 +208,15 @@ void determine_canonical_labelling(struct mygraph* graph_to_label)
 struct mygraph* generate_final_configuration(struct mygraph* start_graph, int number_to_colour, int* nb_of_graphs)
 {
 
-    //initialize a variable to store generated graphs
+    //initialise a variable to store generated graphs
     struct mygraph* generated_graphs = malloc(sizeof(struct mygraph)*1);
     generated_graphs[0].edgelist = start_graph->edgelist;
     generated_graphs[0].numberOfVertices =start_graph->numberOfVertices;
     start_graph->last_edge = -1;//set the last added edge of the start-graph to -1
 
-    //initialize a variable to store how many graphs were in the previous step
+    //initialise a variable to store how many graphs were in the previous step
     int nb_of_old_graphs = 1;
-    //initialize a variable to store the upper bound on the number of edges that can be coloured in the next step
+    //initialise a variable to store the upper bound on the number of edges that can be coloured in the next step
     int nb_of_empty_edges = 0;
 
     //determine the canonical labelling of the start-graph and more importantly:
@@ -228,7 +228,7 @@ struct mygraph* generate_final_configuration(struct mygraph* start_graph, int nu
     generated_graphs[0].possible_edges = start_graph->possible_edges;
     generated_graphs[0].last_edge = -1;
 
-    //initializing a variable to store how many new non-isomorphic graphs were generated
+    //initialising a variable to store how many new non-isomorphic graphs were generated
     int nb_of_new_graphs = 1;
     //an integer to store how many extra edges were coloured red
     int edges_coloured = 0;
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
 
     }
     
-    int number_of_graphs;//initialize a variable to store the number of generated graphs
+    int number_of_graphs;//initialise a variable to store the number of generated graphs
 
     int number_to_colour = size(base_graph) -size(red_start_graph); //compute the number of red edges in the end configuration 
     //starting from the number of edges that can be coloured and are not yet coloured
