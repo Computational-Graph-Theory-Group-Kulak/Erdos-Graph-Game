@@ -146,10 +146,10 @@ void determine_canonical_labeling(struct mygraph* graph_to_label)
     int * lab = malloc(n * sizeof(int)); // a variable to hold the labels of all vertices
     int * ptn = malloc(n * sizeof(int));// a variable to indicate which labels belong to the same colour class
     int orbits[n];  // a variable to store which vertex is the representative of the vertex orbits of each vertex
-                    //all vertex with the same representative belong to the same orbit
+                    //all vertices with the same representative belong to the same orbit
     static DEFAULTOPTIONS_GRAPH(options); // a standard variable for nauty options with everything set to the default
     options.getcanon = TRUE; // enabling nauty to generate a canonical labeling
-    options.defaultptn = FALSE; // enableing the option to provide custom color classes for the vertices
+    options.defaultptn = FALSE; // enabling the option to provide custom colour classes for the vertices
     statsblk stats;// nauty setup
     
     //generate the expanded graph
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
                 free(red_start_graph_str_complete);
                 red_start_graph_given = true;
     
-            }else{//if the red starting graph was already given assume it is the blue starting graph
+            }else{//if the red starting graph was already given, assume it is the blue starting graph
                 char *blue_start_graph_str_complete = malloc(strlen(argv[i]) + 2);
                 strcpy(blue_start_graph_str_complete, argv[i]);
                 strcat(blue_start_graph_str_complete, "\n");
