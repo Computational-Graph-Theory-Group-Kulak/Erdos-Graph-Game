@@ -65,7 +65,7 @@ Usage: `./gen-colex n [-h] [-b] [-p] base-graph red-graph blue-graph `
 
 When the -g flag is not set, graphs are read from stdin in graph6 format. For more information on the format, see <http://users.cecs.anu.edu.au/~bdm/data/formats.txt>. When the -g flag is set graphs are read as bitsets from stdin.
 
-The order of the graphs is always the first argument. The blue startgraph argument should always appear after the red startgraph argument. both startgraphs should always appear after the base graph. Otherwise, the order in which the arguments appear does not matter. Be careful not to put an argument immediately after one with an option. E.g. -p#b will not recognise the -b argument.
+The order of the graphs is always the first argument. The blue startgraph argument should always appear after the red startgraph argument, both startgraphs should always appear after the base graph. Otherwise, the order in which the arguments appear does not matter. Be careful not to put an argument immediately after one with an option. E.g. -p#b will not recognise the -b argument.
 
 On.
 ```
