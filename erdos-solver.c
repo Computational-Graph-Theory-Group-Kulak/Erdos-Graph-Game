@@ -105,7 +105,7 @@ struct mergesort_thread_data
  */
 void printGraph(FILE *__restrict__ stream, struct mygraph *g, int vertices)
 {
-    fprintf(stream, "Color 1:\n");
+    fprintf(stream, "Colour 1:\n");
     for (int i = 0; i < vertices; i++)
     {
         for (int j = 0; j < vertices; j++)
@@ -120,7 +120,7 @@ void printGraph(FILE *__restrict__ stream, struct mygraph *g, int vertices)
         }
         fprintf(stream, "\n");
     }
-    fprintf(stream, "Color 2:\n");
+    fprintf(stream, "Colour 2:\n");
     for (int i = 0; i < vertices; i++)
     {
         for (int j = 0; j < vertices; j++)
