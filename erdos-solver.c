@@ -1231,9 +1231,9 @@ int main(int argc, char **argv)
         }
     }
 
-    //then we initialize a variable to store how many edges blue would have coloured if he was the last player to choose edges
+    //then we initialise a variable to store how many edges blue would have coloured if he was the last player to choose edges
     int leftover_edges =  0;
-    //initializing a variable to track which player made the last move
+    //initialising a variable to track which player made the last move
     bool last_player_is_red = first_player;
     if(first_player){
         //the edges that were actually used in the game are the edges that could have been used (counted in the variable edges)
@@ -1277,7 +1277,7 @@ int main(int argc, char **argv)
     }
     fprintf(stderr, "\n");
 
-    //call the function on the initialized game
+    //call the function on the initialised game
     struct mygraph winner = find_best_game( parents, distinct_graphs, last_player_is_red, threads, SINGLE_THREAD_LIMIT, vertices, combined_base_graph,3);
     
     //print all information about the winning graph
