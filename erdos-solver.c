@@ -3,23 +3,24 @@
  * This file implements an algorithm for generating and analysing edge-coloured graphs using the Nauty library.
  * 
  * General Structure:
- * - Includes and Macros (Lines 25-50): Includes necessary libraries and defines macros.
- * - Struct Definitions (Lines 50-85): Defines structures for storing graph information and thread data.
+ * - Includes and Macros (Lines 25-55): Includes necessary libraries and defines macros.
+ * - Struct Definitions (Lines 55-100): Defines structures for storing graph information and thread data.
  * - Utility Functions:
- *   - printGraph (Lines 86-119): Prints the graph's edge colours.
- *   - is_clique (Lines 120-134): Checks if a set of vertices forms a clique.
- *   - maxCliques (Lines 135-156): Finds the size of the largest clique.
- *   - determine_fitness_clique (Lines 1357-186): Computes fitness based on clique size.
- *   - determine_fitness_vertex_capture (Lines 187-222): Computes fitness based on vertex capture game.
- *   - determine_fitness_max_degree (Lines 223-250): Computes fitness based on maximum degree.
- *   - readGraph (Lines 251-260): Reads a graph from a graph6 string.
- *   - determine_canonical_labelling (Lines 261-336): Finds the canonical labelling of a graph.
+ *   - printGraph (Lines 100-138): Prints the graph's edge colours.
+ *   - is_clique (Lines 139-156): Checks if a set of vertices forms a clique.
+ *   - maxCliques (Lines 157-188): Finds the size of the largest clique.
+ *   - determine_fitness_clique (Lines 189-220): Computes fitness based on clique size.
+ *   - determine_fitness_vertex_capture (Lines 221-260): Computes fitness based on vertex capture game.
+ *   - determine_fitness_max_degree (Lines 261-295): Computes fitness based on maximum degree.
+ *   - readGraph (Lines 296-310): Reads a graph from a graph6 string.
+ *   - generate_expanded_graph (Lines 311-366): Expand the graph to a simple vertex-coloured graph
+ *   - determine_canonical_labelling (Lines 367-432): Finds the canonical labelling of a graph.
  * - Thread Functions:
- *   - generate_children (Lines 337-450): Generates child graphs from parent graphs in parallel.
- *   - mergesort_children (Lines 451-510): Merges two sorted lists of graphs.
+ *   - generate_children (Lines 435-548): Generates child graphs from parent graphs in parallel.
+ *   - mergesort_children (Lines 550-625): Merges two sorted lists of graphs.
  * - Main Algorithm:
- *   - find_best_game (Lines 511-813): Computes the best game configuration given a set of parent graphs.
- * - Main Function (Lines 814-1027): Parses command-line arguments, reads input graphs, and finds the optimal game configuration.
+ *   - find_best_game (Lines 626-1005): Computes the best game configuration given a set of parent graphs.
+ * - Main Function (Lines 1006-1304): Parses command-line arguments, reads input graphs, and finds the optimal game configuration.
  */
 
 #include "readGraph/readGraph6.h"
@@ -218,6 +219,7 @@ int determine_fitness_clique(bitset edgelist, int vertices)
     free(store);
     return 11 * fitness_red - 10 * fitness_blue;
 }
+
 /**
  * A function to determine the fitness value of a given game when playing the vertex capture game.
  */
@@ -621,6 +623,8 @@ void *mergesort_children(void *childrenlist){
     }
     return NULL;
 }
+
+
 /**
  * The main function to compute what the score of the best game would be given a set of parents
  * @param parents : a pointer to the list of parents the game starts with with their fitness set to the score an optimal game starting in the graph would lead to
@@ -722,10 +726,10 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
                             }
                         }
                     //If the search was completed and no isomorphic graph was found at the place where it should be
-                    //add in the new graph.
+                    //thus we add in the new graph
                     else
                     {
-                        // if the search ended in the middle of the list we have to position the new graph correctly.
+                        // if the search ended in the middle of the list we have to position the new graph correctly
                         if(childrennumber != 0 && children_canonical[search_index] < encoded_canonical){
                             search_index +=1;
                         }
@@ -817,7 +821,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
             oldargs[t].red_is_playing = red_is_playing;
             //all threads except for the last one in the case that we have an odd number of threads merge two of the previous lists
             if(even || t != new_threads-1){
-            //copying the graphs from the previous datastructure to the new.
+            //copying the graphs from the previous datastructure to the new
             oldargs[t].children_1 = malloc(sizeof(struct mygraph) * args[2*t].childrennumber);
             oldargs[t].children_2 = malloc(sizeof(struct mygraph) * args[2*t+1].childrennumber);
             oldargs[t].childrennumber_1 = args[2*t].childrennumber;
@@ -842,9 +846,11 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
             
             //running the merge thread
             pthread_create(&thread[t], NULL, mergesort_children, &oldargs[t]);
-            }else //if the number of threads was odd, then the last thread should not be merged, but the data must be put in the correct format
+            }else //if the number of threads was odd
+            //then the last thread should not be merged
+            //but the data must be put in the correct format
                 {
-                //setting the resulting list to the original list as there is no list to merge with.
+                //setting the resulting list to the original list as there is no list to merge with
                 oldargs[t].children = malloc(sizeof(struct mygraph) * (args[2*t].childrennumber));
                 oldargs[t].children_canonical = malloc(sizeof(bitset) * (args[2*t].childrennumber));
                 oldargs[t].childrennumber = malloc(sizeof(int));
@@ -857,9 +863,9 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
                 }
             }
         }
-        /**
-         * waiting for all threads (except for the last when the number was odd) to finish
-         */
+        
+        //waiting for all threads (except for the last when the number was odd) to finish
+        
         for (int t = 0; t < new_threads; t++)
            {
             if(even || t != new_threads-1){
@@ -881,11 +887,8 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
                 free(oldargs[t].children_2_canonical);
                 }
            }
-        
-
-           /**
-            * repeat the process above, until only a single list is constructed
-            */
+    
+        //repeat the process above, until only a single list is constructed
         while (new_threads > 1)
         {
             even = ((new_threads % 2) == 0);
@@ -987,7 +990,7 @@ struct mygraph find_best_game(struct mygraph *parents, int parentsnumber, bool r
         fprintf(stderr, "percentage winning %i: %d out of %d\n",fitness_i, percentage_winning, childrennumber);
     }
     //if we have converged to a single non-isomorphic child then no more moves matter
-    // and we can print the fitness of this option as the score of the optimal game
+    //and we can print the fitness of this option as the score of the optimal game
     if (childrennumber == 1)
     {
         //extract the single graph from the list and free the list
